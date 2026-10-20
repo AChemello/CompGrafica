@@ -1,0 +1,7 @@
+cd /workspaces/CompGrafica
+cat > .gitignore << 'EOF'
+__pycache__/
+*.pyc
+.venv/
+.vscode/
+EOF
