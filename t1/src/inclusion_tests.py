@@ -1,3 +1,22 @@
+import time
+from dataclasses import dataclass, field
+
+from acceleration import EPS
+
+
+def ponto_no_triangulo(p, a, b, c, eps=EPS):
+    """Teste detalhado do enunciado (lateralidade, Aula 3/4), com tolerancia."""
+    def orientacao(p1, p2, p3):
+        return (p1[0] - p3[0]) * (p2[1] - p3[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1])
+
+    d1 = orientacao(p, a, b)
+    d2 = orientacao(p, b, c)
+    d3 = orientacao(p, c, a)
+    tem_negativo = (d1 < -eps) or (d2 < -eps) or (d3 < -eps)
+    tem_positivo = (d1 > eps) or (d2 > eps) or (d3 > eps)
+    return not (tem_negativo and tem_positivo)
+
+
 @dataclass
 class QueryStats:
     total_triangulos: int = 0
