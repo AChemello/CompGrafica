@@ -24,6 +24,18 @@ ap.add_argument("--cell", type=float, default=10,
 ap.add_argument("--arquivo", default=None,
                 help="le os triangulos de um arquivo")
 args = ap.parse_args()
+if args.n <= 0:
+    ap.error("--n deve ser maior que zero")
+if args.size <= 0:
+    ap.error("--size deve ser maior que zero")
+if args.cell <= 0:
+    ap.error("--cell deve ser maior que zero")
+if args.arquivo:
+    SEED = None
+    try:
+        triangles = load_triangles_from_file(args.arquivo)
+    except (OSError, ValueError) as e:
+        ap.error(str(e))
 
 CELL_SIZE = args.cell
 if args.arquivo:
@@ -108,7 +120,7 @@ def display():
     modo = (f"sub={'ON' if state['use_subdivision'] else 'off'} "
             f"env={'ON' if state['use_envelope'] else 'off'}")
     linhas = [
-        f"Seed: {SEED}  Celula: {CELL_SIZE}  Triangulos: {len(triangles)}",
+        f"Seed: {SEED if SEED is not None else 'arquivo'}  Celula: {CELL_SIZE}  Triangulos: {len(triangles)}",
         "Teclas: 1 forca bruta | 2 envelopes | 3 subdivisao | 4 sub+env",
         "        g grade | e envelopes | c candidatos | ESC sai",
          "Cores: vermelho=contem | laranja=envelope | amarelo=subdivisao",
