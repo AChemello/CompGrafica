@@ -14,18 +14,31 @@ CONFIGS = [
     ("subdivisao", True, False),
     ("subdivisao+envelopes", True, True),
 ]
-CABECALHO = ("n,seed,tamanho,celula,config,consultas,tempo_medio_ms,cand_sub_medio,"
+CABECALHO = ("n,seed,tamanho,celula,pontos,config,consultas,tempo_medio_ms,cand_sub_medio,"
              "cand_env_medio,testes_medio,contidos_medio,build_aabb_ms,build_grid_ms,"
              "celulas_ocupadas,max_indices_por_celula")
 
 
-def pontos_de_consulta(qtd, seed):
+def pontos_de_consulta(qtd, seed, modo="uniforme"):
     rng = random.Random(seed * 1000 + 17)  # reprodutivel: mesmos pontos em todas as configs
     xmin, xmax, ymin, ymax = BOUNDS
-    return [(rng.uniform(xmin, xmax), rng.uniform(ymin, ymax)) for _ in range(qtd)]
+    pts = []
+    for _ in range(qtd):
+        if modo == "centro":
+            x, y = rng.uniform(-15, 15), rng.uniform(-15, 15)
+        elif modo == "borda":
+            x, y = rng.uniform(xmin, xmax), rng.uniform(ymin, ymax)
+            if rng.random() < 0.5:
+                x = rng.choice((-1, 1)) * rng.uniform(40, 50)
+            else:
+                y = rng.choice((-1, 1)) * rng.uniform(40, 50)
+        else:
+            x, y = rng.uniform(xmin, xmax), rng.uniform(ymin, ymax)
+        pts.append((x, y))
+    return pts
 
 
-def rodar(n, seed, tamanho, celula, qtd, reps):
+def rodar(n, seed, tamanho, celula, qtd, reps, modo):
     triangulos = generate_random_triangles(n, BOUNDS, max_size=tamanho, seed=seed)
     t0 = time.perf_counter()
     aabbs = [AABB.from_triangle(t) for t in triangulos]
@@ -33,7 +46,7 @@ def rodar(n, seed, tamanho, celula, qtd, reps):
     grid = UniformGrid(aabbs, cell_size=celula)
     t2 = time.perf_counter()
     ocupadas, _, maximo = grid.stats()
-    pontos = pontos_de_consulta(qtd, seed)
+    pontos = pontos_de_consulta(qtd, seed, modo)
     referencia = [set(query(p, triangulos, aabbs, None, False, False).contidos) for p in pontos]
 
     linhas = []
@@ -44,14 +57,15 @@ def rodar(n, seed, tamanho, celula, qtd, reps):
                 s = query(p, triangulos, aabbs, grid, usa_sub, usa_env)
                 tempo += s.tempo_s
             if set(s.contidos) != ref:
-                raise RuntimeError(f"Resultado divergente: {nome}, n={n}, seed={seed}, p={p}")
+                raise RuntimeError(
+                    f"Resultado divergente: {nome}, n={n}, seed={seed}, pontos={modo}, p={p}")
             sub += s.candidatos_subdivisao
             env += s.candidatos_envelope
             testes += s.testes_detalhados
             contidos += len(s.contidos)
         q = len(pontos)
         linhas.append(
-            f"{n},{seed},{tamanho},{celula},{nome},{q},{tempo / (q * reps) * 1000:.5f},"
+            f"{n},{seed},{tamanho},{celula},{modo},{nome},{q},{tempo / (q * reps) * 1000:.5f},"
             f"{sub / q:.2f},{env / q:.2f},{testes / q:.2f},{contidos / q:.3f},"
             f"{(t1 - t0) * 1000:.3f},{(t2 - t1) * 1000:.3f},{ocupadas},{maximo}")
     return linhas
