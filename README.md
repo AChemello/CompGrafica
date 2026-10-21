@@ -27,6 +27,56 @@ Detalhes de cada passo abaixo.
 
 ---
 
+## Se os arquivos forem arrastados para um Codespace (é preciso dar rebuild)
+ 
+O ambiente só é montado a partir da pasta `.devcontainer/` **quando o Codespace é criado ou
+reconstruído**. Por isso, se o Codespace foi aberto vazio (ou a partir de outro repositório)
+e os arquivos deste projeto foram **arrastados para dentro dele depois**, ele **não foi
+inicializado do jeito correto**: não aparecem as portas, não existe o desktop virtual e as
+bibliotecas não estão instaladas (`ModuleNotFoundError: No module named 'OpenGL'`).
+ 
+Para corrigir:
+ 
+1. **Confira a estrutura.** A pasta `.devcontainer/` (oculta), o `run.sh` e a pasta `t1/`
+   precisam estar **na raiz** do workspace, lado a lado. **Tudo o que está dentro de `t1/`
+   permanece como está** (`src/`, `data/`, `requirements.txt`).
+```
+   <raiz do workspace>
+   ├── .devcontainer/        ← na raiz (pasta oculta)
+   ├── run.sh                ← na raiz
+   └── t1/                   ← o conteúdo interno não muda
+       ├── requirements.txt
+       ├── data/
+       └── src/
+```
+ 
+   Se tudo ficou dentro de uma pasta extra (por exemplo `CompGrafica-main/`, criada ao
+   baixar o `.zip`), mova o conteúdo dela para a raiz:
+ 
+```bash
+   cd /workspaces/<nome-do-workspace>
+   shopt -s dotglob
+   mv -f CompGrafica-main/* .
+   rmdir CompGrafica-main
+   ls -a
+```
+ 
+   (`dotglob` faz o `*` incluir a pasta oculta `.devcontainer`.)
+ 
+2. **Reconstrua o ambiente:** **Ctrl+Shift+P → "Codespaces: Full Rebuild Container"**.
+   Leva alguns minutos e a página recarrega sozinha. Use o *Full* Rebuild.
+3. **Confira.** Depois de recarregar, a porta **6080** deve aparecer na aba **PORTAS** e
+   este comando deve imprimir `OpenGL OK`:
+```bash
+   python -c "from OpenGL.GL import *; from OpenGL.GLUT import *; print('OpenGL OK')"
+```
+ 
+A forma mais simples de evitar isso é criar o Codespace **diretamente de um repositório**
+que já contenha os arquivos (**Code → Codespaces → Create codespace on main**): assim o
+`.devcontainer/` é aplicado já na criação e nenhum rebuild é necessário.
+
+---
+
 ## Como executar (passo a passo)
 
 ### 1. Criar o Codespace
