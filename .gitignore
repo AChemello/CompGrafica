@@ -5,3 +5,9 @@ __pycache__/
 .venv/
 .vscode/
 EOF
+cd /workspaces/CompGrafica
+cat >> .gitignore << 'EOF'
+*.csv
+EOF
+cat .gitignore
+git ls-files | grep -E "\.csv$|pycache"

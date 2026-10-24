@@ -20,7 +20,8 @@ CABECALHO = ("n,seed,tamanho,celula,pontos,config,consultas,tempo_medio_ms,cand_
 
 
 def pontos_de_consulta(qtd, seed, modo="uniforme"):
-    rng = random.Random(seed * 1000 + 17)  # reprodutivel: mesmos pontos em todas as configs
+    # reprodutivel: mesmos pontos em todas as configs
+    rng = random.Random(seed * 1000 + 17)
     xmin, xmax, ymin, ymax = BOUNDS
     pts = []
     for _ in range(qtd):
@@ -39,7 +40,8 @@ def pontos_de_consulta(qtd, seed, modo="uniforme"):
 
 
 def rodar(n, seed, tamanho, celula, qtd, reps, modo):
-    triangulos = generate_random_triangles(n, BOUNDS, max_size=tamanho, seed=seed)
+    triangulos = generate_random_triangles(
+        n, BOUNDS, max_size=tamanho, seed=seed)
     t0 = time.perf_counter()
     aabbs = [AABB.from_triangle(t) for t in triangulos]
     t1 = time.perf_counter()
@@ -47,7 +49,8 @@ def rodar(n, seed, tamanho, celula, qtd, reps, modo):
     t2 = time.perf_counter()
     ocupadas, _, maximo = grid.stats()
     pontos = pontos_de_consulta(qtd, seed, modo)
-    referencia = [set(query(p, triangulos, aabbs, None, False, False).contidos) for p in pontos]
+    referencia = [set(query(p, triangulos, aabbs, None,
+                      False, False).contidos) for p in pontos]
 
     linhas = []
     for nome, usa_sub, usa_env in CONFIGS:
@@ -72,17 +75,21 @@ def rodar(n, seed, tamanho, celula, qtd, reps, modo):
 
 
 def principal(argv=None):
-    ap = argparse.ArgumentParser(description="Benchmark das 4 configuracoes (gera CSV)")
+    ap = argparse.ArgumentParser(
+        description="Benchmark das 4 configuracoes (gera CSV)")
     ap.add_argument("--n", type=int, nargs="+", default=[100, 1000, 10000])
     ap.add_argument("--seed", type=int, nargs="+", default=[1, 2, 3])
     ap.add_argument("--size", type=float, nargs="+", default=[4, 8])
     ap.add_argument("--cell", type=float, nargs="+", default=[5, 10, 20])
+    ap.add_argument("--pontos", nargs="+", default=["uniforme"],
+                    choices=["uniforme", "centro", "borda"])
     ap.add_argument("--queries", type=int, default=200)
     ap.add_argument("--reps", type=int, default=3)
     args = ap.parse_args(argv)
     print(CABECALHO)
-    for n, seed, tam, cel in itertools.product(args.n, args.seed, args.size, args.cell):
-        for linha in rodar(n, seed, tam, cel, args.queries, args.reps):
+    for n, seed, tam, cel, modo in itertools.product(
+            args.n, args.seed, args.size, args.cell, args.pontos):
+        for linha in rodar(n, seed, tam, cel, args.queries, args.reps, modo):
             print(linha)
 
 
